@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('learning.projects') }}" class="btn-link">← Back to projects</a>
+<h1>{{ project.title }}</h1>
+<p class="subtitle">{{ project.description }}</p>
+<section class="card">
+<h2>Project brief</h2>
+{% if project.career %}<p><strong>Career:</strong> {{ project.career.title }}</p>{% endif %}
+{% if project.skill %}<p><strong>Skill:</strong> {{ project.skill.name }}</p>{% endif %}
+<p><strong>Difficulty:</strong> {{ project.difficulty or "Advanced" }}</p>
+{% if project.requirements_json %}<h3>Requirements</h3><ul>{% for item in project.requirements_json|fromjson %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+{% if project.expected_outcomes %}<h3>Expected outcomes</h3><p>{{ project.expected_outcomes }}</p>{% endif %}
+</section>
+{% endblock %}

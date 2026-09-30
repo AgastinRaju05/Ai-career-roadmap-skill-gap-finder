@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+<h1>{{ heading }}</h1>
+<p class="subtitle">Choose a learning resource, then track it as not started, in progress, or complete.</p>
+<div class="card-grid">
+    {% for item in items %}
+    <article class="card resource-card">
+        <div class="resource-meta">{{ item.skill.name if item.skill else 'Career development' }}{% if item.level %} · {{ item.level }}{% elif item.difficulty %} · {{ item.difficulty }}{% endif %}</div>
+        <h2>{% if resource_type == "project" %}<a href="{{ url_for('learning.project_detail', project_id=item.id) }}">{{ item.title }}</a>{% else %}<a href="{{ url_for('learning.course_detail', course_id=item.id) }}">{{ item.title }}</a>{% endif %}</h2>
+        {% if item.provider %}<p class="muted">{{ item.provider }}</p>{% endif %}
+        <p>{{ item.description or 'Build practical capability through focused practice.' }}</p>
+        {% if item.url %}<p><a class="btn-link" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">Open resource ↗</a></p>{% endif %}
+        <form method="post" action="{{ url_for('learning.update_progress', resource_type=resource_type, resource_id=item.id) }}" class="status-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="progress-{{ resource_type }}-{{ item.id }}">My progress</label>
+            <select id="progress-{{ resource_type }}-{{ item.id }}" name="status">
+                <option value="not_started" {% if progress.get(item.id, 'not_started') == 'not_started' %}selected{% endif %}>Not started</option>
+                <option value="in_progress" {% if progress.get(item.id) == 'in_progress' %}selected{% endif %}>In progress</option>
+                <option value="completed" {% if progress.get(item.id) == 'completed' %}selected{% endif %}>Completed</option>
+            </select>
+            <button type="submit" class="btn-secondary">Save</button>{% if resource_type == "course" and progress.get(item.id) == "completed" %}<a class="btn-link" href="{{ url_for('assessment.select') }}">Reassess skills →</a>{% endif %}
+        </form>
+    </article>
+    {% else %}
+    <div class="empty-state"><p>No {{ heading|lower }} have been added yet. Run the seed script to load sample resources.</p></div>
+    {% endfor %}
+</div>
+{% endblock %}

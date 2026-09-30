@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ career.title }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('career.discovery') }}" class="btn-link">← Back to Careers</a>
+<h1>{{ career.title }}</h1>
+<p class="subtitle">{{ career.description }}</p>
+
+<div class="card-grid">
+    <div class="card">
+        <h3>Overview</h3>
+        <p><strong>Average Salary:</strong> {{ career.avg_salary or "N/A" }}</p>
+        <p><strong>Growth Outlook:</strong> {{ career.growth_outlook or "N/A" }}</p>
+    </div>
+    <div class="card">
+        <h3>Required Skills</h3>
+        <ul class="plain-list">
+            {% for cs in career.career_skills %}
+                <li>{{ cs.skill.name }} — target {{ cs.importance }}/5
+                    <span class="muted">(you: {{ user_levels.get(cs.skill_id, 0) }}/5)</span></li>
+            {% else %}
+                <li>No skills mapped yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="page-actions">
+    <a href="{{ url_for('assessment.take', career_id=career.id) }}" class="btn-secondary">Check my skill levels</a>
+    <a href="{{ url_for('assessment.start', career_id=career.id) }}" class="btn-primary">Take adaptive AI skill test</a>
+    <form method="post" action="{{ url_for('roadmap.generate', career_id=career.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-primary">Build my roadmap</button>
+    </form>
+</div>
+{% endblock %}

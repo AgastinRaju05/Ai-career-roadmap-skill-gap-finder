@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ roadmap.career.title }} roadmap{% endblock %}
+{% block content %}
+<a href="{{ url_for('career.detail', career_id=roadmap.career_id) }}" class="btn-link">← {{ roadmap.career.title }}</a>
+<h1>Your {{ roadmap.career.title }} roadmap</h1>
+<p class="subtitle">{{ completed_steps }} of {{ roadmap.steps|length }} steps complete</p>
+<div class="progress-track"><span style="width: {{ (completed_steps / roadmap.steps|length * 100)|round|int }}%"></span></div>
+
+<div class="roadmap-list">
+    {% for step in roadmap.steps %}
+    <article class="card roadmap-step">
+        <div class="step-number">{{ loop.index }}</div>
+        <div class="step-content">
+            <h2>{{ step.title }}</h2>
+            {% if step.skill %}<p class="muted">Focus skill: {{ step.skill.name }}</p>{% endif %}
+            <p>{{ step.description }}</p>
+            {% if step.course %}<p><a class="btn-link" href="{{ url_for('learning.course_detail', course_id=step.course.id) }}">Explore {{ step.course.title }} →</a></p>{% endif %}
+            <form method="post" action="{{ url_for('roadmap.update_step', roadmap_id=roadmap.id, step_id=step.id) }}" class="inline-form status-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="status-{{ step.id }}">Status</label>
+                <select id="status-{{ step.id }}" name="status">
+                    <option value="not_started" {% if step.status == 'not_started' %}selected{% endif %}>Not started</option>
+                    <option value="in_progress" {% if step.status == 'in_progress' %}selected{% endif %}>In progress</option>
+                    <option value="completed" {% if step.status == 'completed' %}selected{% endif %}>Complete</option>
+                </select>
+                <button type="submit" class="btn-secondary">Update</button>
+            </form>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% endblock %}

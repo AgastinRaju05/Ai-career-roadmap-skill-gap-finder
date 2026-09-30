@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Career Roadmap{% endblock %} | AI Career Roadmap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <nav class="navbar">
+        <div class="nav-brand"> CareerPath AI</div>
+        <div class="nav-user">Mapping Potential. Building Futures.</div>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
+            <a href="{{ url_for('career.discovery') }}">Careers</a>
+            <a href="{{ url_for('learning.courses') }}">Courses</a>
+            <a href="{{ url_for('learning.projects') }}">Projects</a>
+            <a href="{{ url_for('profile.edit') }}">Profile</a>
+            <form method="post" action="{{ url_for('auth.logout') }}" class="nav-logout-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="nav-logout">Log out</button>
+            </form>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="project-footer">
+    <div class="footer-content">
+        <h2>Turn Ambition into a Roadmap.</h2>
+
+        <div class="contact-details">
+            <a href="careerpath_ai@gmail.com">
+                 careerpath_ai@gmail.com
+
+            </a>
+
+            <a href="tel:+91 8903174099">
+                 +91 8903174099
+            </a>
+        </div>
+
+        <p>Team BreakingBad | AI Career Roadmap</p>
+    </div>
+</footer>
+
+<style>
+    .project-footer {
+        width: 100%;
+        margin-top: 50px;
+        padding: 30px 20px;
+        background: #0b0f19;
+        color: white;
+        text-align: center;
+        box-sizing: border-box;
+        border-top: 1px solid #263044;
+    }
+
+    .footer-content h2 {
+        margin: 0 0 18px;
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    .contact-details {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 25px;
+        margin-bottom: 18px;
+    }
+
+    .contact-details a {
+        color: #cbd5e1;
+        text-decoration: none;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    .contact-details a:hover {
+        color: #ffffff;
+    }
+
+    .footer-content p {
+        margin: 0;
+        color: #7f8ba3;
+        font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+        .contact-details {
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+</style>
+
+</body>
+</html>

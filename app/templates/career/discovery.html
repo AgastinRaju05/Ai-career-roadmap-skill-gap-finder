@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Career Discovery{% endblock %}
+{% block content %}
+<h1>Discover Careers</h1>
+<p class="subtitle">Your match is estimated from the skill levels in your profile. Update them any time.</p>
+
+<div class="card-grid">
+    {% for career, match_percent in ranked_careers %}
+    <div class="card">
+        <h3>{{ career.title }}</h3>
+        <p>{{ (career.description or '')[:120] }}{% if career.description and career.description|length > 120 %}...{% endif %}</p>
+        <p><strong>{{ match_percent }}% skill match</strong></p>
+        {% if career.avg_salary %}<p><strong>Avg Salary:</strong> {{ career.avg_salary }}</p>{% endif %}
+        <a href="{{ url_for('career.detail', career_id=career.id) }}" class="btn-link">View Details →</a>
+    </div>
+    {% else %}
+    <div class="empty-state"><p>No careers are available yet. Ask an administrator to seed the career catalog.</p></div>
+    {% endfor %}
+</div>
+<p class="page-actions"><a href="{{ url_for('assessment.select') }}" class="btn-primary">Select careers &amp; start AI assessment</a> <a href="{{ url_for('profile.edit') }}" class="btn-secondary">Update my skills</a></p>
+{% endblock %}

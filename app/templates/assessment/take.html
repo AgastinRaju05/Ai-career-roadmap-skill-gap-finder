@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Skill check — {{ career.title }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('career.detail', career_id=career.id) }}" class="btn-link">← Back to {{ career.title }}</a>
+<h1>Skill check: {{ career.title }}</h1>
+<p class="subtitle">Rate your current confidence for each skill. This is a self-assessment, not a pass/fail test.</p>
+<form method="post" class="card page-form assessment-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for requirement in requirements %}
+    <label class="assessment-rating">
+        <span><strong>{{ requirement.skill.name }}</strong><small>Career target: {{ requirement.importance }}/5</small></span>
+        <select name="skill_{{ requirement.skill_id }}" required>
+            <option value="">Choose a rating</option>
+            {% for level in range(1, 6) %}
+            <option value="{{ level }}" {% if current_levels.get(requirement.skill_id) == level %}selected{% endif %}>{{ level }} — {% if level == 1 %}New to it{% elif level == 5 %}Very confident{% else %}Developing{% endif %}</option>
+            {% endfor %}
+        </select>
+    </label>
+    {% endfor %}
+    <button type="submit" class="btn-primary">Save skill check</button>
+</form>
+{% endblock %}

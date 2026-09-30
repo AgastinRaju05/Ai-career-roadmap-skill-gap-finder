@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Hi, {{ current_user.name }} </h1>
+<p class="subtitle">Here's where you stand on your career journey.</p>
+
+<div class="stat-row">
+    <div class="stat-card"><strong>{{ skill_count }}</strong><span>Skills tracked</span></div>
+    {% if active_roadmap %}
+    <div class="stat-card"><strong>{{ completed_steps }}/{{ active_roadmap.steps|length }}</strong><span>Roadmap steps complete</span></div>
+    {% else %}
+    <div class="stat-card"><strong>—</strong><span>Roadmap progress</span></div>
+    {% endif %}
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <h3>Active Roadmap</h3>
+        {% if active_roadmap %}
+            <p>Target: <strong>{{ active_roadmap.career.title }}</strong></p>
+            <p>{{ active_roadmap.steps|length }} steps planned</p>
+            <a href="{{ url_for('roadmap.detail', roadmap_id=active_roadmap.id) }}" class="btn-link">View Roadmap →</a>
+        {% else %}
+            <p>You haven't generated a roadmap yet.</p>
+            <a href="{{ url_for('career.discovery') }}" class="btn-link">Explore Careers →</a>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Recent Assessments</h3>
+        {% if recent_assessments %}
+            <ul class="plain-list">
+                {% for a in recent_assessments %}
+                    <li>{{ a.career.title if a.career else "General" }} — {{ a.status }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No assessments taken yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Quick Actions</h3>
+        <a href="{{ url_for('career.discovery') }}" class="btn-link">Discover Careers →</a><br>
+        <a href="{{ url_for('profile.edit') }}" class="btn-link">Update Profile →</a><br>
+        <a href="{{ url_for('learning.courses') }}" class="btn-link">Browse Courses →</a><br>
+        <a href="{{ url_for('learning.projects') }}" class="btn-link">Explore Projects →</a>
+    </div>
+</div>
+{% endblock %}

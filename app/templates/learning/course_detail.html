@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block content %}
+
+<a href="{{ url_for('learning.courses') }}" class="btn-link">← Back to courses</a>
+
+<h1>{{ course.title }}</h1>
+
+<p class="subtitle">
+    {{ course.description or 'Build practical capability through focused practice.' }}
+</p>
+
+<section class="card">
+
+    {% if course.provider %}
+        <p><strong>Provider:</strong> {{ course.provider }}</p>
+    {% endif %}
+
+    {% if course.skill %}
+        <p><strong>Skill:</strong> {{ course.skill.name }}</p>
+    {% endif %}
+
+    {% if course.level %}
+        <p><strong>Level:</strong> {{ course.level }}</p>
+    {% endif %}
+
+    {% if course.url %}
+        <p>
+            <a class="btn-link"
+               href="{{ course.url }}"
+               target="_blank"
+               rel="noopener noreferrer">
+                Open provider course ↗
+            </a>
+        </p>
+    {% endif %}
+
+    <!-- FREE COURSE / RESOURCE -->
+    {% if course.free_course_url %}
+    <div class="free-course-box">
+        <div class="free-course-label">🆓 FREE COURSE</div>
+
+        <h3>
+            {{ course.free_course_title or 'Recommended Free Course' }}
+        </h3>
+
+        {% if course.free_course_provider %}
+            <p class="muted">
+                {{ course.free_course_provider }}
+            </p>
+        {% endif %}
+
+        <a class="free-course-btn"
+           href="{{ course.free_course_url }}"
+           target="_blank"
+           rel="noopener noreferrer">
+            Start Free Course ↗
+        </a>
+    </div>
+    {% endif %}
+
+    <form method="post"
+          action="{{ url_for('learning.update_progress',
+                            resource_type='course',
+                            resource_id=course.id) }}"
+          class="status-form">
+
+        <input type="hidden"
+               name="csrf_token"
+               value="{{ csrf_token() }}">
+
+        <label for="course-progress">My progress</label>
+
+        <select id="course-progress" name="status">
+            <option value="not_started"
+                {% if not progress or progress.status == 'not_started' %}
+                    selected
+                {% endif %}>
+                Not started
+            </option>
+
+            <option value="in_progress"
+                {% if progress and progress.status == 'in_progress' %}
+                    selected
+                {% endif %}>
+                In progress
+            </option>
+
+            <option value="completed"
+                {% if progress and progress.status == 'completed' %}
+                    selected
+                {% endif %}>
+                Completed
+            </option>
+        </select>
+
+        <button type="submit" class="btn-secondary">
+            Save
+        </button>
+
+        {% if progress and progress.status == 'completed' %}
+            <a class="btn-link"
+               href="{{ url_for('assessment.select') }}">
+                Reassess skills →
+            </a>
+        {% endif %}
+
+    </form>
+
+</section>
+
+
+<section class="card">
+
+    <h2>
+        Related courses
+        {% if course.skill %}
+            for {{ course.skill.name }}
+        {% endif %}
+    </h2>
+
+    {% if related_courses %}
+
+    <div class="card-grid">
+
+        {% for related in related_courses %}
+
+        <article class="card resource-card">
+
+            {% if related.level %}
+                <div class="resource-meta">
+                    {{ related.level }}
+                </div>
+            {% endif %}
+
+            <h3>
+                <a href="{{ url_for('learning.course_detail',
+                                    course_id=related.id) }}">
+                    {{ related.title }}
+                </a>
+            </h3>
+
+            {% if related.provider %}
+                <p class="muted">
+                    {{ related.provider }}
+                </p>
+            {% endif %}
+
+            <p>
+                {{ related.description or
+                   'Build practical capability through focused practice.' }}
+            </p>
+
+            <!-- FREE COURSE FOR RELATED COURSE -->
+            {% if related.free_course_url %}
+
+                <div class="related-free-course">
+                    🆓
+                    <strong>
+                        {{ related.free_course_title or 'Free learning resource' }}
+                    </strong>
+
+                    {% if related.free_course_provider %}
+                        <span class="muted">
+                            — {{ related.free_course_provider }}
+                        </span>
+                    {% endif %}
+
+                    <br>
+
+                    <a class="btn-link"
+                       href="{{ related.free_course_url }}"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        Start free course ↗
+                    </a>
+                </div>
+
+            {% elif related.skill %}
+
+                <a class="btn-link"
+                   href="https://www.coursera.org/search?query={{ related.skill.name|urlencode }}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    Find {{ related.skill.name }} courses ↗
+                </a>
+
+            {% else %}
+
+                <a class="btn-link"
+                   href="https://www.coursera.org/search?query={{ related.title|urlencode }}"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    Find this course ↗
+                </a>
+
+            {% endif %}
+
+        </article>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+        <p class="muted">
+            There are no other courses for this skill yet.
+        </p>
+
+    {% endif %}
+
+</section>
+
+
+<style>
+
+.free-course-box {
+    margin: 25px 0;
+    padding: 22px;
+    border: 1px solid #22c55e;
+    border-radius: 12px;
+    background: rgba(34, 197, 94, 0.08);
+}
+
+.free-course-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #16a34a;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.free-course-box h3 {
+    margin: 5px 0;
+}
+
+.free-course-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    background: #16a34a;
+    color: white;
+}
+
+.free-course-btn:hover {
+    opacity: 0.9;
+}
+
+.related-free-course {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(34, 197, 94, 0.08);
+}
+
+</style>
+
+{% endblock %}

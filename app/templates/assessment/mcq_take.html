@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Skill test — {{ career.title }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('career.detail', career_id=career.id) }}" class="btn-link">← Back to {{ career.title }}</a>
+<h1>Skill test: {{ career.title }}</h1>
+<p class="subtitle">Answer these multiple-choice questions to objectively test your current skillset. We'll grade it, score each skill, and show you exactly where the gaps are for this career.</p>
+
+<form method="post" class="card page-form quiz-form" action="{{ url_for('assessment.mcq_take', career_id=career.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="assessment_id" value="{{ assessment.id }}">
+
+    {% for question, options in prepared %}
+    <fieldset class="quiz-question">
+        <legend>
+            <span class="quiz-number">Q{{ loop.index }}</span>
+            {{ question.question_text }}
+            {% if question.skill %}<span class="quiz-skill-tag">{{ question.skill.name }}</span>{% endif %}
+        </legend>
+        <div class="quiz-options">
+            {% for letter, text in options.items() %}
+            <label class="quiz-option">
+                <input type="radio" name="q_{{ question.id }}" value="{{ letter }}" required
+                    {% if question.user_answer == letter %}checked{% endif %}>
+                <span class="quiz-option-letter">{{ letter }}</span>
+                <span class="quiz-option-text">{{ text }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </fieldset>
+    {% endfor %}
+
+    <button type="submit" class="btn-primary">Submit skill test</button>
+</form>
+{% endblock %}

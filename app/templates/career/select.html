@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Choose careers{% endblock %}
+{% block content %}
+<h1>Choose your target career(s)</h1>
+<p class="subtitle">Select one or more careers. Shared skills are assessed once where possible.</p>
+<form method="post" action="{{ url_for('assessment.select_post') }}" class="card page-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="card-grid">
+{% for career in careers %}
+<label class="card">
+<input type="checkbox" name="career_ids" value="{{ career.id }}">
+<strong>{{ career.title }}</strong>
+<p>{{ career.description }}</p>
+</label>
+{% endfor %}
+</div>
+<button class="btn-primary" type="submit">Start adaptive assessment</button>
+</form>
+{% endblock %}

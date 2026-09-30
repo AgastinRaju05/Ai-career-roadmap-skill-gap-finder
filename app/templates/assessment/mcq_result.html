@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Skill test results{% endblock %}
+{% block content %}
+<h1>Skill test complete</h1>
+<p class="subtitle">{{ career.title if career else 'General skills' }} · {{ assessment.completed_at.strftime('%b %d, %Y') if assessment.completed_at else '' }}</p>
+
+<section class="card result-card">
+    <p class="result-score">{{ assessment.score }}% <span>correct overall</span></p>
+
+    <h2>Skill-by-skill breakdown</h2>
+    <ul class="plain-list breakdown-list">
+        {% for item in breakdown %}
+        <li>
+            <div class="breakdown-row">
+                <span><strong>{{ item.skill }}</strong> <span class="muted">({{ item.correct }}/{{ item.total }} correct)</span></span>
+                <span class="muted">Assessed level: {{ item.proficiency }}/5</span>
+            </div>
+            <div class="progress-track"><span style="width: {{ (item.proficiency / 5 * 100)|round|int }}%;"></span></div>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section class="card gap-card">
+    <h2>Skill gap analysis{% if career %} for {{ career.title }}{% endif %}</h2>
+    {% if not career %}
+        <p class="muted">This test wasn't tied to a specific career, so no gap analysis is available.</p>
+    {% elif gaps %}
+        <p class="subtitle">Here's what to focus on next, ranked by priority.</p>
+        <ul class="plain-list gap-list">
+            {% for gap in gaps %}
+            <li class="gap-item">
+                <div class="breakdown-row">
+                    <span><strong>{{ gap.skill }}</strong> <span class="priority-badge priority-{{ gap.priority|lower }}">{{ gap.priority }} priority</span></span>
+                    <span class="muted">{{ gap.current_level }}/5 → target {{ gap.required_level }}/5</span>
+                </div>
+                {% if gap.note %}<p class="gap-note">{{ gap.note }}</p>{% endif %}
+                {% if gap.suggested_course %}
+                <p class="gap-course">Suggested: <a href="{{ url_for('learning.courses') }}">{{ gap.suggested_course.title }}</a> ({{ gap.suggested_course.provider or 'Self-paced' }})</p>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="muted">No major gaps found — your assessed skills already meet the targets for {{ career.title }}. 🎉</p>
+    {% endif %}
+</section>
+
+<p class="page-actions">
+    {% if career %}<button class="btn-primary" type="submit" form="generate-roadmap">Build a roadmap to close these gaps</button>{% endif %}
+    <a class="btn-secondary" href="{{ url_for('profile.edit') }}">Edit profile</a>
+</p>
+{% if career %}
+<form id="generate-roadmap" method="post" action="{{ url_for('roadmap.generate', career_id=career.id) }}" hidden>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endif %}
+
+
+<section class="card">
+<h2>Skill web</h2>
+<p class="muted">Current estimated level vs career target — colored by how far behind each skill is.</p>
+<canvas id="skillRadar" width="560" height="460" style="max-width:100%;"></canvas>
+<ul class="web-legend">
+    <li><span class="web-dot web-dot-ok"></span>On target</li>
+    <li><span class="web-dot web-dot-warn"></span>1 level behind</li>
+    <li><span class="web-dot web-dot-bad"></span>2+ levels behind</li>
+    <li><span class="web-dot web-dot-target"></span>Target line</li>
+</ul>
+</section>
+<script>
+(() => {
+ const data={{ breakdown|tojson }};
+ const labels=data.map(x=>x.skill), current=data.map(x=>x.proficiency), target=labels.map(name=>{
+   const g={{ gaps|tojson }}.find(x=>x.skill===name); return g ? g.required_level : 5;
+ });
+ const GAP_OK="#39ff88", GAP_WARN="#ffd23f", GAP_BAD="#ff3860", TARGET_COLOR="#ff2ec4", GRID_COLOR="rgba(0, 240, 255, 0.18)", LABEL_COLOR="#e7ecff";
+ const gapColor=(cur,tgt)=>{const d=tgt-cur; return d<=0?GAP_OK:d===1?GAP_WARN:GAP_BAD;};
+ const c=document.getElementById("skillRadar"),ctx=c.getContext("2d"), w=c.width,h=c.height,cx=w/2,cy=h/2,r=Math.min(w,h)*.32,n=labels.length||1;
+ ctx.clearRect(0,0,w,h); ctx.font="12px 'Rajdhani', sans-serif"; ctx.textAlign="center";
+
+ // ring bands, alternating subtle fill so the web reads at a glance
+ for(let ring=5;ring>=1;ring--){
+   ctx.beginPath();
+   for(let i=0;i<n;i++){let a=-Math.PI/2+i*2*Math.PI/n,rr=r*ring/5,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+   ctx.closePath();
+   ctx.fillStyle= ring%2===0 ? "rgba(0, 240, 255, 0.035)" : "rgba(255, 255, 255, 0.012)";
+   ctx.fill();
+   ctx.strokeStyle=GRID_COLOR; ctx.lineWidth=1; ctx.stroke();
+ }
+ // spokes
+ for(let i=0;i<n;i++){let a=-Math.PI/2+i*2*Math.PI/n,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;
+   ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x,y);ctx.strokeStyle=GRID_COLOR;ctx.lineWidth=1;ctx.stroke();}
+
+ function pointAt(v,i){let a=-Math.PI/2+i*2*Math.PI/n,rr=r*v/5; return [cx+Math.cos(a)*rr, cy+Math.sin(a)*rr];}
+
+ // target web — dashed magenta outline only, so gap colors underneath stay readable
+ ctx.beginPath();
+ target.forEach((v,i)=>{const [x,y]=pointAt(v,i); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+ ctx.closePath();
+ ctx.setLineDash([6,5]);
+ ctx.strokeStyle=TARGET_COLOR; ctx.lineWidth=2; ctx.stroke();
+ ctx.setLineDash([]);
+
+ // current web — cyan glow fill
+ ctx.beginPath();
+ current.forEach((v,i)=>{const [x,y]=pointAt(v,i); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+ ctx.closePath();
+ ctx.fillStyle="rgba(0, 240, 255, 0.16)";
+ ctx.fill();
+ ctx.strokeStyle="#00f0ff"; ctx.lineWidth=2; ctx.shadowColor="rgba(0, 240, 255, 0.6)"; ctx.shadowBlur=8; ctx.stroke(); ctx.shadowBlur=0;
+
+ // vertex dots colored by how far each skill is from its target — the at-a-glance gap indicator
+ current.forEach((v,i)=>{
+   const [x,y]=pointAt(v,i), color=gapColor(v,target[i]);
+   ctx.beginPath(); ctx.arc(x,y,5,0,2*Math.PI);
+   ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
+   ctx.lineWidth=1.5; ctx.strokeStyle="#05060f"; ctx.stroke();
+ });
+
+ // labels, colored to match each skill's gap severity so weak spots pop straight off the chart
+ labels.forEach((name,i)=>{
+   let a=-Math.PI/2+i*2*Math.PI/n,x=cx+Math.cos(a)*(r+32),y=cy+Math.sin(a)*(r+32);
+   ctx.fillStyle=gapColor(current[i],target[i]);
+   ctx.font="600 12px 'Rajdhani', sans-serif";
+   ctx.fillText(name.length>18?name.slice(0,18)+"…":name,x,y);
+ });
+})();
+</script>
+
+{% for item in advanced_items if item.skill_id %}
+<section class="card"><strong>{{ item.skill }} reached Advanced.</strong><p>Build a practical project to demonstrate it.</p><form method="post" action="{{ url_for('assessment.generate_project', assessment_id=assessment.id, skill_id=item.skill_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn-primary">Generate Advanced project</button></form></section>
+{% endfor %}
+{% if analysis %}
+<section class="card">
+<h2>AI assessment analysis</h2><p>{{ analysis.summary }}</p>
+{% if analysis.strengths %}<h3>Strengths</h3><ul>{% for x in analysis.strengths %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+{% if analysis.weaknesses %}<h3>Focus areas</h3><ul>{% for x in analysis.weaknesses %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+</section>
+{% endif %}
+<div class="page-actions">
+{% if assessment.assessment_type != 'reassessment' %}<form method="post" action="{{ url_for('roadmap.generate', career_id=career.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn-primary">Generate personalized AI roadmap</button></form>{% endif %}
+<form method="post" action="{{ url_for('assessment.reassess', assessment_id=assessment.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn-secondary">Generate next reassessment</button></form>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Skill check results{% endblock %}
+{% block content %}
+<h1>Skill check complete</h1>
+<p class="subtitle">{{ assessment.career.title if assessment.career else 'General skills' }} · {{ assessment.completed_at.strftime('%b %d, %Y') if assessment.completed_at else '' }}</p>
+<section class="card result-card">
+    <p class="result-score">{{ '%.1f'|format(assessment.score or 0) }} <span>/ 5 average self-rating</span></p>
+    <h2>Your ratings</h2>
+    <ul class="plain-list">
+        {% for question in assessment.questions|sort(attribute='order_index') %}
+        <li>{{ question.skill.name if question.skill else question.question_text }} <strong>{{ question.user_answer }}/5</strong></li>
+        {% endfor %}
+    </ul>
+</section>
+<p class="page-actions">
+    {% if assessment.career %}<button class="btn-primary" type="submit" form="generate-roadmap">Build a roadmap</button>{% endif %}
+    <a class="btn-secondary" href="{{ url_for('profile.edit') }}">Edit profile</a>
+</p>
+{% if assessment.career %}
+<form id="generate-roadmap" method="post" action="{{ url_for('roadmap.generate', career_id=assessment.career_id) }}" hidden>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endif %}
+{% endblock %}
